@@ -1,0 +1,62 @@
+{% extends "traslados/base.html" %}{% load static %}
+{% block titulo %}Registrar tags{% endblock %}
+{% block nav_registrar %}activo{% endblock %}
+{% block h1 %}Registrar tags{% endblock %}
+{% block subtitulo %}Asocie pines a equipos, tarjetas a responsables y autorice celulares{% endblock %}
+{% block miga %}Registrar tags{% endblock %}
+
+{% block contenido %}
+  {% csrf_token %}
+  <p id="aviso-nfc" class="alerta" hidden>
+    Este navegador no tiene NFC. Use Chrome en un Android con NFC activado,
+    o ingrese el UID a mano.
+  </p>
+
+  <fieldset class="tipo">
+    <legend>¿Qué va a registrar?</legend>
+    <label class="opcion"><input type="radio" name="tipo" value="activo" checked> Pin de un equipo</label>
+    <label class="opcion"><input type="radio" name="tipo" value="responsable"> Tarjeta de un responsable</label>
+  </fieldset>
+
+  <div class="bloque">
+    <h2>1. Leer el tag</h2>
+    <button id="btn-nfc" type="button" class="principal">Iniciar lectura NFC</button>
+    <form id="form-manual" class="fila">
+      <input id="uid-manual" autocomplete="off" placeholder="o escriba el UID">
+      <button type="submit">Usar</button>
+    </form>
+    <div id="uid-info" class="ficha" hidden></div>
+  </div>
+
+  <div class="bloque">
+    <h2>2. Buscar <span id="txt-tipo">el equipo</span></h2>
+    <input id="buscar" autocomplete="off" placeholder="Código, nombre o serial">
+    <ul id="resultados" class="resultados"></ul>
+  </div>
+
+  <div class="bloque">
+    <button id="btn-asociar" type="button" class="principal" disabled>Asociar</button>
+    <button id="btn-reemplazar" type="button" class="secundario" hidden>Sí, reemplazar el tag anterior</button>
+  </div>
+
+  <p id="ok" class="exito" hidden></p>
+  <p id="error" class="error" role="alert" hidden></p>
+
+  <hr class="separador">
+
+  <div class="bloque">
+    <h2>Autorizar este celular</h2>
+    {% if dispositivo %}
+      <p class="ficha">Este celular ya está autorizado como <strong>{{ dispositivo.nombre }}</strong>.</p>
+    {% else %}
+      <p class="ayuda">Hágalo una sola vez, desde el celular que usarán los responsables. Al autorizarlo se cierra su sesión de administrador en ese celular y queda listo: los responsables solo pasan su tarjeta.</p>
+      <form method="post" action="{% url 'autorizar' %}" class="fila">
+        {% csrf_token %}
+        <input name="nombre" required maxlength="100" placeholder="Ej: Celular Sistemas – Sede Administrativa">
+        <button type="submit">Autorizar</button>
+      </form>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block scripts %}<script src="{% static 'traslados/registrar.js' %}"></script>{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "traslados/base.html" %}{% load static %}
+{% block titulo %}Traslado de equipos{% endblock %}
+{% block nav_traslados %}activo{% endblock %}
+{% block h1 %}Traslado de equipos{% endblock %}
+{% block subtitulo %}Pase su tarjeta, luego el pin del equipo, y elija el destino{% endblock %}
+{% block miga %}Traslado de equipos{% endblock %}
+
+{% block contenido %}
+  <p id="aviso-nfc" class="alerta" hidden>
+    Este navegador no tiene NFC. Use Chrome en un Android con NFC activado,
+    o ingrese los UID a mano para pruebas.
+  </p>
+
+  <ol class="pasos">
+    <li id="p1" class="activo"><span>1</span> Tarjeta</li>
+    <li id="p2"><span>2</span> Equipo</li>
+    <li id="p3"><span>3</span> Destino</li>
+  </ol>
+
+  <!-- Paso 1 y 2: lectura -->
+  <div id="vista-lectura">
+    <div class="zona-lectura">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8.3a6 6 0 0 1 0 7.4M9.5 6a10 10 0 0 1 0 12M3 10.5a2.5 2.5 0 0 1 0 3"/><rect x="13" y="4" width="8" height="16" rx="2"/></svg>
+      <p id="instruccion" class="instruccion">Acerque su <strong>tarjeta</strong> a la parte trasera del celular.</p>
+    </div>
+    <button id="btn-nfc" type="button" class="principal">Iniciar lectura NFC</button>
+
+    <div id="responsable" class="ficha" hidden></div>
+
+    <details class="manual">
+      <summary>Ingresar UID a mano (pruebas)</summary>
+      <form id="form-manual" class="fila">
+        <input id="uid-manual" autocomplete="off" placeholder="Ej: 04:E6:BA:3B:C9:2A:81">
+        <button type="submit">Usar</button>
+      </form>
+    </details>
+  </div>
+
+  <!-- Paso 3: formulario -->
+  <div id="vista-form" hidden>
+    <form id="form-traslado">
+      {% csrf_token %}
+      <label>Responsable
+        <input id="f-responsable" disabled>
+      </label>
+      <label>Equipo
+        <input id="f-equipo" disabled>
+      </label>
+      <label>Ubicación actual
+        <input id="f-ubicacion" disabled>
+      </label>
+      <label>Sede destino
+        <select id="f-sede" required>
+          <option value="">Seleccione…</option>
+        </select>
+      </label>
+      <label>Área destino
+        <select id="f-area" required disabled>
+          <option value="">Primero elija la sede</option>
+        </select>
+      </label>
+      <button type="submit" class="principal" id="btn-aceptar">Aceptar</button>
+      <button type="button" id="btn-cancelar" class="secundario">Cancelar</button>
+    </form>
+  </div>
+
+  <!-- Resultado -->
+  <div id="vista-resultado" hidden>
+    <p id="resultado" class="exito"></p>
+    <button type="button" id="btn-nuevo" class="principal">Registrar otro traslado</button>
+  </div>
+
+  <p id="error" class="error" role="alert" hidden></p>
+{% endblock %}
+
+{% block scripts %}<script src="{% static 'traslados/app.js' %}"></script>{% endblock %}

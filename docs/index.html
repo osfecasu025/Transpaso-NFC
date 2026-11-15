@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Inventario NFC · Demo</title>
+  <style>
+/* Estilo alineado con app.nordvitalips.com */
+:root {
+  --teal: #0f7466;
+  --teal-oscuro: #0b5d52;
+  --teal-suave: #e6f3f0;
+  --azul-seccion: #1690d0;
+  --violeta: #8b7cf6;
+  --fondo: #e2e8f0;
+  --borde: #d6dce4;
+  --texto: #1f2937;
+  --texto-suave: #4b5563;
+  --sombra: 0 8px 14px -8px rgba(124, 108, 246, .55), 0 1px 3px rgba(15, 23, 42, .08);
+  --radio: 10px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+}
+a { color: inherit; }
+
+/* ---------- barra superior ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 14px;
+  height: 72px; padding: 0 18px;
+  background: #fff; border-bottom: 1px solid var(--borde);
+}
+.logo {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.6rem; line-height: 1; color: var(--teal-oscuro);
+}
+.topbar-der { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.icono {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 40px; padding: 0;
+  background: #fff; border: 1px solid #b9c2cc; border-radius: 6px; color: #374151;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+.chip-usuario {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 10px 6px 14px;
+  border: 1px solid #b9c2cc; border-radius: 6px; background: #fff;
+}
+.chip-texto { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+.chip-texto strong { font-size: .9rem; font-weight: 600; }
+.chip-texto small { font-size: .72rem; color: var(--texto-suave); }
+.avatar {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%; background: #111827; color: #fff;
+}
+
+/* ---------- layout ---------- */
+.layout { display: flex; min-height: calc(100vh - 72px); }
+.sidebar {
+  width: 270px; flex-shrink: 0; padding: 14px 12px;
+  background: #fff; border-right: 1px solid var(--borde);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px;
+  text-decoration: none; font-size: .92rem; color: var(--texto);
+}
+.nav-item:hover { background: #f3f6f8; }
+.nav-item.activo { background: var(--teal-suave); color: var(--teal); font-weight: 600; }
+.nav-seccion {
+  margin: 14px 8px 4px; padding-top: 12px; border-top: 1px solid var(--borde);
+  font-size: .8rem; font-weight: 700; text-transform: uppercase; color: var(--azul-seccion);
+}
+.nav-pie { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--borde); }
+.salir { margin: 0; }
+.salir button {
+  width: 100%; background: #fff; border: 1px solid var(--borde); border-radius: 6px;
+  padding: 8px; font-size: .85rem; color: var(--texto-suave); cursor: pointer;
+}
+.contenido { flex: 1; min-width: 0; padding: 32px 44px; }
+
+/* ---------- tarjetas ---------- */
+.tarjeta {
+  background: #fff; border-radius: var(--radio); box-shadow: var(--sombra);
+  margin-bottom: 22px;
+}
+.encabezado { display: flex; align-items: center; gap: 14px; padding: 20px 26px; }
+.volver { width: 40px; height: 40px; flex-shrink: 0; text-decoration: none; }
+.encabezado-texto { flex: 1; min-width: 0; }
+.encabezado h1 {
+  margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: -.01em; color: var(--teal);
+}
+.subrayado {
+  display: block; width: 74px; height: 4px; margin: 6px 0 10px; border-radius: 4px;
+  background: linear-gradient(90deg, var(--violeta), rgba(139, 124, 246, .15));
+}
+.encabezado p { margin: 0; font-size: .86rem; color: var(--texto-suave); }
+.migas { display: flex; gap: 14px; font-size: .88rem; color: var(--texto-suave); white-space: nowrap; }
+.migas a { text-decoration: none; }
+.cuerpo { padding: 28px; max-width: 760px; }
+
+/* ---------- pasos ---------- */
+.pasos { display: flex; list-style: none; padding: 0; margin: 0 0 22px; gap: 10px; }
+.pasos li {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 6px; border-radius: 8px; border: 1px solid var(--borde);
+  background: #f8fafc; color: var(--texto-suave); font-size: .9rem;
+}
+.pasos li span {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%; background: #e5e7eb; font-size: .78rem; font-weight: 700;
+}
+.pasos li.activo { border-color: var(--teal); background: var(--teal-suave); color: var(--teal); font-weight: 600; }
+.pasos li.activo span { background: var(--teal); color: #fff; }
+.pasos li.hecho { color: var(--teal); }
+.pasos li.hecho span { background: #c9e7e1; color: var(--teal); }
+
+.zona-lectura {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 22px 12px; margin-bottom: 14px;
+  border: 1.5px dashed #b7d9d2; border-radius: var(--radio); color: var(--teal); background: #f7fbfa;
+}
+.instruccion { font-size: 1.05rem; text-align: center; margin: 0; color: var(--texto); }
+
+/* ---------- formularios ---------- */
+h2 { font-size: 1rem; margin: 0 0 10px; color: var(--teal-oscuro); }
+label { display: block; margin-bottom: 14px; font-size: .88rem; font-weight: 600; color: #374151; }
+input, select {
+  display: block; width: 100%; margin-top: 5px; padding: 11px 12px;
+  font: inherit; font-size: .95rem; border: 1px solid #c7cfd8; border-radius: 6px; background: #fff;
+}
+input:focus, select:focus { outline: 2px solid rgba(15, 116, 102, .25); border-color: var(--teal); }
+input:disabled { background: #f1f4f7; color: #374151; }
+
+button, .boton {
+  display: inline-block; font: inherit; font-size: .95rem; padding: 11px 16px; border-radius: 6px;
+  border: 1px solid var(--teal); background: #fff; color: var(--teal); cursor: pointer; text-decoration: none;
+}
+button.principal, .boton { width: 100%; background: var(--teal); color: #fff; font-weight: 600; text-align: center; }
+button.principal:hover, .boton:hover { background: var(--teal-oscuro); }
+button.secundario { width: 100%; margin-top: 8px; }
+button:disabled { opacity: .5; cursor: default; }
+
+.manual { margin-top: 22px; font-size: .88rem; color: var(--texto-suave); }
+.fila { display: flex; gap: 8px; margin-top: 10px; }
+.fila input { margin-top: 0; }
+.fila button { flex-shrink: 0; }
+
+.bloque { margin: 22px 0; }
+.tipo { border: 1px solid var(--borde); border-radius: 8px; padding: 10px 14px; }
+.tipo legend { font-weight: 700; font-size: .88rem; color: var(--teal-oscuro); padding: 0 4px; }
+label.opcion { display: flex; align-items: center; gap: 8px; font-weight: 400; margin: 6px 0; }
+label.opcion input { width: auto; margin: 0; }
+.resultados { list-style: none; padding: 0; margin: 8px 0 0; }
+.resultados li {
+  border: 1px solid var(--borde); border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; cursor: pointer;
+}
+.resultados li.elegido { border: 2px solid var(--teal); background: var(--teal-suave); }
+.resultados small { display: block; color: var(--texto-suave); margin-top: 2px; }
+.separador { border: 0; border-top: 1px solid var(--borde); margin: 26px 0; }
+.ayuda { font-size: .88rem; color: var(--texto-suave); margin: 0 0 6px; }
+
+/* ---------- mensajes ---------- */
+.ficha { background: #f8fafc; border: 1px solid var(--borde); border-radius: 8px; padding: 12px; margin: 14px 0; }
+.alerta { background: #fff7e0; border: 1px solid #ecd28a; padding: 10px 12px; border-radius: 8px; font-size: .9rem; }
+.error { background: #fdecec; border: 1px solid #efb1b1; color: #8a1c1c; padding: 10px 12px; border-radius: 8px; }
+.exito { background: var(--teal-suave); border: 1px solid #9fd2c7; color: var(--teal-oscuro); padding: 14px; border-radius: 8px; font-weight: 600; }
+.vacio { text-align: center; padding: 30px 10px; color: var(--texto-suave); font-size: .9rem; }
+.vacio-titulo { font-size: 1.05rem; font-weight: 600; color: #374151; margin-bottom: 4px; }
+.vacio .boton { width: auto; margin-top: 14px; }
+
+/* ---------- celular ---------- */
+@media (max-width: 860px) {
+  .sidebar {
+    position: fixed; top: 72px; bottom: 0; left: 0; z-index: 15;
+    transform: translateX(-100%); transition: transform .2s ease;
+    box-shadow: 4px 0 16px rgba(0,0,0,.08);
+  }
+  .sidebar.abierta { transform: none; }
+  .contenido { padding: 16px 12px; }
+  .encabezado { padding: 16px; align-items: flex-start; }
+  .encabezado h1 { font-size: 1.5rem; }
+  .migas, .chip-texto small { display: none; }
+  .cuerpo { padding: 18px 16px; }
+  .topbar { height: 64px; }
+  .logo { font-size: 2.2rem; }
+  .sidebar { top: 64px; }
+}
+
+.demo-banda { background: #fff7e0; border-bottom: 1px solid #ecd28a; padding: 6px 14px; font-size: .78rem; text-align: center; color: #6b5310; }
+.tabla { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.tabla th { text-align: left; color: var(--texto-suave); font-weight: 600; border-bottom: 1px solid var(--borde); padding: 8px 6px; }
+.tabla td { border-bottom: 1px solid #edf0f3; padding: 9px 6px; vertical-align: top; }
+.tabla small { color: var(--texto-suave); }
+.etiqueta { display: inline-block; font-size: .72rem; padding: 2px 8px; border-radius: 999px; background: var(--teal-suave); color: var(--teal); }
+.etiqueta.gris { background: #eef1f4; color: var(--texto-suave); }
+.dos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.vista[hidden] { display: none; }
+.nav-item { cursor: pointer; }
+.peligro { border-color: #c24141; color: #c24141; width: 100%; margin-top: 8px; }
+@media (max-width: 860px) { .dos { grid-template-columns: 1fr; } .tabla .ocultar-cel { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="demo-banda">Versión de prueba: los datos se guardan solo en este celular.</div>
+  <header class="topbar">
+    <button type="button" class="icono" id="btn-menu" aria-label="Menú">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M13 10l2 2-2 2"/></svg>
+    </button>
+    <span class="logo">N</span>
+    <div class="topbar-der">
+      <div class="chip-usuario">
+        <div class="chip-texto"><strong>Inventario NFC</strong><small>Piloto</small></div>
+        <span class="avatar" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar">
+      <a class="nav-item" data-ir="traslado">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3 2 12h3v8h5v-5h4v5h5v-8h3z"/></svg> Inicio
+      </a>
+      <p class="nav-seccion">Gestión de inventarios</p>
+      <a class="nav-item" data-ir="traslado">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg> Traslado de equipos
+      </a>
+      <a class="nav-item" data-ir="equipos">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m21 16-9 5-9-5V8l9-5 9 5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg> Equipos
+      </a>
+      <a class="nav-item" data-ir="historial">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Historial
+      </a>
+      <a class="nav-item" data-ir="registrar">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 10h8M8 14h5"/></svg> Registrar tags
+      </a>
+    </nav>
+
+    <main class="contenido">
+      <section class="tarjeta encabezado">
+        <button type="button" class="icono volver" data-ir="traslado" aria-label="Volver">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>
+        </button>
+        <div class="encabezado-texto">
+          <h1 id="h1"></h1>
+          <span class="subrayado"></span>
+          <p id="subtitulo"></p>
+        </div>
+        <div class="migas"><span>Inicio</span><span>›</span><span id="miga"></span></div>
+      </section>
+
+      <p id="aviso-nfc" class="alerta" hidden>
+        Este navegador no tiene NFC. Use Chrome en un Android con NFC activado, o ingrese los UID a mano.
+      </p>
+
+      <!-- ================= TRASLADO ================= -->
+      <section class="tarjeta cuerpo vista" id="v-traslado">
+        <ol class="pasos">
+          <li id="p1" class="activo"><span>1</span> Tarjeta</li>
+          <li id="p2"><span>2</span> Equipo</li>
+          <li id="p3"><span>3</span> Destino</li>
+        </ol>
+
+        <div id="t-lectura">
+          <div class="zona-lectura">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8.3a6 6 0 0 1 0 7.4M9.5 6a10 10 0 0 1 0 12M3 10.5a2.5 2.5 0 0 1 0 3"/><rect x="13" y="4" width="8" height="16" rx="2"/></svg>
+            <p id="t-instruccion" class="instruccion">Acerque su <strong>tarjeta</strong> a la parte trasera del celular.</p>
+          </div>
+          <button type="button" class="principal btn-nfc">Iniciar lectura NFC</button>
+          <div id="t-responsable" class="ficha" hidden></div>
+          <details class="manual">
+            <summary>Ingresar UID a mano (pruebas)</summary>
+            <form id="t-manual" class="fila">
+              <input autocomplete="off" placeholder="Ej: 04:46:41:73:D5:2A:81">
+              <button type="submit">Usar</button>
+            </form>
+          </details>
+        </div>
+
+        <form id="t-form" hidden>
+          <label>Responsable <input id="f-responsable" disabled></label>
+          <label>Equipo <input id="f-equipo" disabled></label>
+          <label>Ubicación actual <input id="f-ubicacion" disabled></label>
+          <label>Sede destino
+            <select id="f-sede" required><option value="">Seleccione…</option></select>
+          </label>
+          <label>Área destino
+            <select id="f-area" required disabled><option value="">Primero elija la sede</option></select>
+          </label>
+          <button type="submit" class="principal">Aceptar</button>
+          <button type="button" class="secundario" id="t-cancelar">Cancelar</button>
+        </form>
+
+        <div id="t-resultado" hidden>
+          <p id="t-mensaje" class="exito"></p>
+          <button type="button" class="principal" id="t-nuevo">Registrar otro traslado</button>
+        </div>
+        <p id="t-error" class="error" role="alert" hidden></p>
+      </section>
+
+      <!-- ================= EQUIPOS ================= -->
+      <section class="tarjeta cuerpo vista" id="v-equipos" hidden>
+        <table class="tabla">
+          <thead><tr><th>Equipo</th><th>Ubicación</th><th class="ocultar-cel">Pin</th></tr></thead>
+          <tbody id="e-filas"></tbody>
+        </table>
+      </section>
+
+      <!-- ================= HISTORIAL ================= -->
+      <section class="tarjeta cuerpo vista" id="v-historial" hidden>
+        <table class="tabla">
+          <thead><tr><th>Fecha</th><th>Equipo</th><th>Movimiento</th></tr></thead>
+          <tbody id="h-filas"></tbody>
+        </table>
+        <p id="h-vacio" class="vacio" hidden>Aún no hay traslados registrados.</p>
+      </section>
+
+      <!-- ================= REGISTRAR ================= -->
+      <section class="tarjeta cuerpo vista" id="v-registrar" hidden>
+        <fieldset class="tipo">
+          <legend>¿Qué va a registrar?</legend>
+          <label class="opcion"><input type="radio" name="r-tipo" value="activo" checked> Pin de un equipo</label>
+          <label class="opcion"><input type="radio" name="r-tipo" value="responsable"> Tarjeta de un responsable</label>
+        </fieldset>
+
+        <div class="bloque">
+          <h2>1. Leer el tag</h2>
+          <button type="button" class="principal btn-nfc">Iniciar lectura NFC</button>
+          <form id="r-manual" class="fila">
+            <input autocomplete="off" placeholder="o escriba el UID">
+            <button type="submit">Usar</button>
+          </form>
+          <div id="r-info" class="ficha" hidden></div>
+        </div>
+
+        <div class="bloque">
+          <h2>2. Elegir <span id="r-txt">el equipo</span></h2>
+          <ul id="r-lista" class="resultados"></ul>
+        </div>
+
+        <div class="bloque">
+          <button type="button" class="principal" id="r-asociar" disabled>Asociar</button>
+          <button type="button" class="secundario" id="r-reemplazar" hidden>Sí, reemplazar el tag anterior</button>
+        </div>
+        <p id="r-ok" class="exito" hidden></p>
+        <p id="r-error" class="error" role="alert" hidden></p>
+
+        <hr class="separador">
+        <div class="bloque">
+          <h2>Crear <span id="r-txt2">equipo</span> nuevo</h2>
+          <form id="r-nuevo">
+            <div class="dos">
+              <label><span id="r-l1">Código</span> <input id="r-c1" required maxlength="50"></label>
+              <label><span id="r-l2">Nombre</span> <input id="r-c2" required maxlength="150"></label>
+            </div>
+            <label id="r-ubic">Ubicación inicial
+              <select id="r-area"></select>
+            </label>
+            <button type="submit">Crear</button>
+          </form>
+        </div>
+
+        <hr class="separador">
+        <button type="button" class="peligro" id="r-reset">Borrar todo y volver a los datos de prueba</button>
+      </section>
+    </main>
+  </div>
+
+<script>
+// Versión estática (GitHub Pages) del flujo de traslados con NFC.
+// Sin servidor: los datos viven en localStorage de este celular.
+(() => {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  const CLAVE = "nfc_inventario_demo_v1";
+
+  // ---------------- datos ----------------
+  const DATOS_INICIALES = () => ({
+    sig: 100,
+    sedes: [
+      { id: 1, nombre: "Sede Administrativa", areas: [
+        { id: 11, nombre: "Sistemas" }, { id: 12, nombre: "Contabilidad" }, { id: 13, nombre: "Calidad" }] },
+      { id: 2, nombre: "Sede 3", areas: [
+        { id: 21, nombre: "Urgencias" }, { id: 22, nombre: "Laboratorio" }, { id: 23, nombre: "Consulta externa" }] },
+    ],
+    activos: [
+      { id: 1, codigo: "PC-ACER-001", nombre: "PC Acer", uid: "04E6BA3BC92A81", area: 11 },
+      { id: 2, codigo: "EQ-0001", nombre: "Computador de escritorio", uid: "04A1B2C3D4E5F6", area: 11 },
+      { id: 3, codigo: "EQ-0002", nombre: "Impresora láser", uid: "04A1B2C3D4E5F7", area: 12 },
+      { id: 4, codigo: "EQ-0003", nombre: "Monitor de signos vitales", uid: null, area: 21 },
+    ],
+    responsables: [
+      { id: 1, nombre: "Alanna", cargo: "Auxiliar de Inventario", uid: "04464173D52A81" },
+      { id: 2, nombre: "Responsable de prueba", cargo: "Técnico de sistemas", uid: "04AABBCCDDEE01" },
+    ],
+    movimientos: [],
+  });
+
+  let memoria = null;
+  function cargar() {
+    try {
+      const txt = localStorage.getItem(CLAVE);
+      if (txt) return JSON.parse(txt);
+    } catch (_) { /* almacenamiento no disponible */ }
+    return memoria || DATOS_INICIALES();
+  }
+  function guardar() {
+    memoria = db;
+    try { localStorage.setItem(CLAVE, JSON.stringify(db)); } catch (_) { /* queda en memoria */ }
+  }
+  let db = cargar();
+
+  const normalizar = (v) => String(v || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+  const conPuntos = (u) => (u || "").match(/.{1,2}/g)?.join(":") || "";
+  const areaPorId = (id) => {
+    for (const s of db.sedes) for (const a of s.areas) if (a.id === id) return { sede: s, area: a };
+    return null;
+  };
+  const ubicacion = (areaId) => {
+    const x = areaPorId(areaId);
+    return x ? `${x.sede.nombre} – ${x.area.nombre}` : "—";
+  };
+  const queEs = (uid) => {
+    const a = db.activos.find((x) => x.uid === uid);
+    if (a) return { tipo: "activo", obj: a, texto: `Pin del equipo ${a.codigo} – ${a.nombre}` };
+    const r = db.responsables.find((x) => x.uid === uid);
+    if (r) return { tipo: "responsable", obj: r, texto: `Tarjeta de ${r.nombre}` };
+    return null;
+  };
+  const mostrar = (id, texto) => { $(id).textContent = texto || ""; $(id).hidden = !texto; };
+  const vibrar = (p = 120) => navigator.vibrate && navigator.vibrate(p);
+
+  // ---------------- NFC (un solo lector para toda la página) ----------------
+  let lectorActivo = false;
+  let alLeer = () => {};   // cada vista define qué hacer con el UID
+
+  async function iniciarNfc(errId) {
+    if (!("NDEFReader" in window)) { $("aviso-nfc").hidden = false; return; }
+    if (lectorActivo) return;
+    try {
+      const lector = new NDEFReader();
+      await lector.scan();
+      lectorActivo = true;
+      document.querySelectorAll(".btn-nfc").forEach((b) => {
+        b.textContent = "Lectura NFC activa: acerque el tag";
+        b.disabled = true;
+      });
+      lector.onreading = (ev) => alLeer(normalizar(ev.serialNumber));
+      lector.onreadingerror = () =>
+        mostrar(errId, "No se pudo leer el tag. Si es nuevo, escríbale un texto con NFC Tools e intente de nuevo.");
+    } catch (e) {
+      mostrar(errId, e.name === "NotAllowedError"
+        ? "Permiso de NFC denegado. Actívelo en la configuración del sitio en Chrome."
+        : `No se pudo iniciar NFC: ${e.message}`);
+    }
+  }
+
+  // ---------------- navegación ----------------
+  const VISTAS = {
+    traslado: ["Traslado de equipos", "Pase su tarjeta, luego el pin del equipo, y elija el destino"],
+    equipos: ["Equipos", "Ubicación actual de cada equipo"],
+    historial: ["Historial", "Todos los traslados registrados en este celular"],
+    registrar: ["Registrar tags", "Asocie pines a equipos y tarjetas a responsables"],
+  };
+  function ir(nombre) {
+    if (!VISTAS[nombre]) nombre = "traslado";
+    Object.keys(VISTAS).forEach((v) => { $(`v-${v}`).hidden = v !== nombre; });
+    $("h1").textContent = VISTAS[nombre][0];
+    $("subtitulo").textContent = VISTAS[nombre][1];
+    $("miga").textContent = VISTAS[nombre][0];
+    document.querySelectorAll(".sidebar .nav-item").forEach((a, i) =>
+      a.classList.toggle("activo", a.dataset.ir === nombre && i > 0));
+    $("sidebar").classList.remove("abierta");
+    if (nombre === "traslado") { alLeer = leerTraslado; }
+    if (nombre === "registrar") { alLeer = leerRegistro; pintarListaRegistro(); pintarFormNuevo(); }
+    if (nombre === "equipos") { alLeer = () => {}; pintarEquipos(); }
+    if (nombre === "historial") { alLeer = () => {}; pintarHistorial(); }
+    if (location.hash !== `#${nombre}`) history.replaceState(null, "", `#${nombre}`);
+  }
+
+  // ---------------- TRASLADO ----------------
+  const t = { paso: 1, resp: null, activo: null };
+
+  function marcarPaso(n) {
+    t.paso = n;
+    ["p1", "p2", "p3"].forEach((id, i) => { $(id).className = i + 1 < n ? "hecho" : i + 1 === n ? "activo" : ""; });
+  }
+
+  function leerTraslado(uid) {
+    mostrar("t-error");
+    if (!uid) return;
+    if (t.paso === 1) {
+      const r = db.responsables.find((x) => x.uid === uid);
+      if (!r) return mostrar("t-error", "Tarjeta no registrada.");
+      t.resp = r;
+      mostrar("t-responsable", `Responsable: ${r.nombre}${r.cargo ? " – " + r.cargo : ""}`);
+      $("f-responsable").value = r.nombre;
+      $("t-instruccion").innerHTML = "Ahora acerque el celular al <strong>pin del equipo</strong>.";
+      marcarPaso(2);
+      vibrar();
+    } else if (t.paso === 2) {
+      const a = db.activos.find((x) => x.uid === uid);
+      if (!a) {
+        const otro = queEs(uid);
+        return mostrar("t-error", otro ? `Eso es: ${otro.texto}. Acerque el pin del equipo.` : "Este pin no está asociado a ningún equipo.");
+      }
+      t.activo = a;
+      $("f-equipo").value = `${a.codigo} – ${a.nombre}`;
+      $("f-ubicacion").value = ubicacion(a.area);
+      llenarSedes();
+      marcarPaso(3);
+      $("t-lectura").hidden = true;
+      $("t-form").hidden = false;
+      vibrar();
+    }
+  }
+
+  function llenarSedes() {
+    const sel = $("f-sede");
+    sel.length = 1;
+    db.sedes.forEach((s) => sel.add(new Option(s.nombre, s.id)));
+    sel.value = "";
+    llenarAreas();
+  }
+  function llenarAreas() {
+    const sel = $("f-area");
+    const sede = db.sedes.find((s) => String(s.id) === $("f-sede").value);
+    sel.length = 0;
+    if (!sede) { sel.add(new Option("Primero elija la sede", "")); sel.disabled = true; return; }
+    sel.add(new Option("Seleccione…", ""));
+    sede.areas.filter((a) => a.id !== t.activo.area).forEach((a) => sel.add(new Option(a.nombre, a.id)));
+    sel.disabled = false;
+  }
+
+  function aceptarTraslado(ev) {
+    ev.preventDefault();
+    const destino = Number($("f-area").value);
+    if (!destino) return mostrar("t-error", "Seleccione sede y área de destino.");
+    // Releer de los datos: el origen nunca sale del formulario.
+    const activo = db.activos.find((x) => x.id === t.activo.id);
+    if (activo.area === destino) return mostrar("t-error", "El equipo ya está en esa área.");
+    db.movimientos.unshift({
+      id: db.sig++,
+      fecha: new Date().toISOString(),
+      activo: activo.id,
+      responsable: t.resp.id,
+      origen: activo.area,
+      destino,
+    });
+    activo.area = destino;   // actualización inmediata (decisión del piloto)
+    guardar();
+    mostrar("t-mensaje", `${activo.codigo} quedó en ${ubicacion(destino)}.`);
+    $("t-form").hidden = true;
+    $("t-resultado").hidden = false;
+    vibrar([80, 60, 80]);
+  }
+
+  function reiniciarTraslado() {
+    Object.assign(t, { resp: null, activo: null });
+    $("t-responsable").hidden = true;
+    $("t-instruccion").innerHTML = "Acerque su <strong>tarjeta</strong> a la parte trasera del celular.";
+    $("t-form").reset();
+    $("t-form").hidden = true;
+    $("t-resultado").hidden = true;
+    $("t-lectura").hidden = false;
+    mostrar("t-error");
+    marcarPaso(1);
+  }
+
+  // ---------------- EQUIPOS / HISTORIAL ----------------
+  function celda(fila, texto, chico, clase) {
+    const td = document.createElement("td");
+    if (clase) td.className = clase;
+    td.append(document.createTextNode(texto));
+    if (chico) { const s = document.createElement("small"); s.textContent = chico; td.append(document.createElement("br"), s); }
+    fila.append(td);
+    return td;
+  }
+
+  function pintarEquipos() {
+    const tb = $("e-filas");
+    tb.replaceChildren();
+    db.activos.forEach((a) => {
+      const tr = document.createElement("tr");
+      celda(tr, a.codigo, a.nombre);
+      celda(tr, ubicacion(a.area));
+      const td = celda(tr, "", null, "ocultar-cel");
+      const et = document.createElement("span");
+      et.className = a.uid ? "etiqueta" : "etiqueta gris";
+      et.textContent = a.uid ? conPuntos(a.uid) : "sin pin";
+      td.append(et);
+      tb.append(tr);
+    });
+  }
+
+  function pintarHistorial() {
+    const tb = $("h-filas");
+    tb.replaceChildren();
+    $("h-vacio").hidden = db.movimientos.length > 0;
+    db.movimientos.forEach((m) => {
+      const a = db.activos.find((x) => x.id === m.activo);
+      const r = db.responsables.find((x) => x.id === m.responsable);
+      const f = new Date(m.fecha);
+      const tr = document.createElement("tr");
+      celda(tr, f.toLocaleDateString("es-CO"), f.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }));
+      celda(tr, a ? a.codigo : "—", r ? `por ${r.nombre}` : "");
+      celda(tr, ubicacion(m.destino), `desde ${ubicacion(m.origen)}`);
+      tb.append(tr);
+    });
+  }
+
+  // ---------------- REGISTRAR ----------------
+  const r = { uid: null, elegido: null };
+  const tipoReg = () => document.querySelector("[name=r-tipo]:checked").value;
+  const listaReg = () => (tipoReg() === "activo" ? db.activos : db.responsables);
+
+  function leerRegistro(uid) {
+    mostrar("r-error"); mostrar("r-ok");
+    $("r-reemplazar").hidden = true;
+    if (!uid || uid.length < 8) return mostrar("r-error", "UID no válido.");
+    r.uid = uid;
+    const uso = queEs(uid);
+    $("r-info").style.whiteSpace = "pre-line";
+    mostrar("r-info", `UID leído: ${conPuntos(uid)}\n${uso ? "Ya registrado: " + uso.texto : "Libre: aún no está asociado."}`);
+    vibrar();
+    actualizarBotonReg();
+  }
+
+  function pintarListaRegistro() {
+    const ul = $("r-lista");
+    ul.replaceChildren();
+    r.elegido = null;
+    listaReg().forEach((x) => {
+      const li = document.createElement("li");
+      li.textContent = tipoReg() === "activo" ? `${x.codigo} – ${x.nombre}` : x.nombre;
+      const s = document.createElement("small");
+      const extra = tipoReg() === "activo" ? ubicacion(x.area) : x.cargo || "";
+      s.textContent = `${extra}${x.uid ? " · tag: " + conPuntos(x.uid) : " · sin tag"}`;
+      li.append(s);
+      li.addEventListener("click", () => {
+        r.elegido = x;
+        ul.querySelectorAll("li").forEach((o) => o.classList.remove("elegido"));
+        li.classList.add("elegido");
+        $("r-reemplazar").hidden = true;
+        actualizarBotonReg();
+      });
+      ul.append(li);
+    });
+    actualizarBotonReg();
+  }
+
+  function actualizarBotonReg() { $("r-asociar").disabled = !(r.uid && r.elegido); }
+
+  function asociar(reemplazar) {
+    mostrar("r-error"); mostrar("r-ok");
+    const uso = queEs(r.uid);
+    if (uso && uso.obj !== r.elegido) return mostrar("r-error", `Este tag ya está registrado: ${uso.texto}.`);
+    if (r.elegido.uid && r.elegido.uid !== r.uid && !reemplazar) {
+      $("r-reemplazar").hidden = false;
+      return mostrar("r-error", `Ya tiene otro tag (${conPuntos(r.elegido.uid)}). ¿Reemplazarlo?`);
+    }
+    r.elegido.uid = r.uid;
+    guardar();
+    const nombre = r.elegido.codigo || r.elegido.nombre;
+    r.uid = null;
+    $("r-info").hidden = true;
+    $("r-reemplazar").hidden = true;
+    pintarListaRegistro();
+    mostrar("r-ok", `Tag asociado a ${nombre}. Puede leer el siguiente.`);
+    vibrar([80, 60, 80]);
+  }
+
+  function pintarFormNuevo() {
+    const esActivo = tipoReg() === "activo";
+    $("r-txt").textContent = esActivo ? "el equipo" : "el responsable";
+    $("r-txt2").textContent = esActivo ? "equipo" : "responsable";
+    $("r-l1").textContent = esActivo ? "Código" : "Nombre";
+    $("r-l2").textContent = esActivo ? "Nombre" : "Cargo";
+    $("r-c2").required = esActivo;
+    $("r-ubic").hidden = !esActivo;
+    const sel = $("r-area");
+    sel.length = 0;
+    db.sedes.forEach((s) => s.areas.forEach((a) => sel.add(new Option(`${s.nombre} – ${a.nombre}`, a.id))));
+  }
+
+  function crearNuevo(ev) {
+    ev.preventDefault();
+    mostrar("r-error"); mostrar("r-ok");
+    const c1 = $("r-c1").value.trim(), c2 = $("r-c2").value.trim();
+    if (tipoReg() === "activo") {
+      if (db.activos.some((a) => a.codigo.toUpperCase() === c1.toUpperCase()))
+        return mostrar("r-error", "Ya existe un equipo con ese código.");
+      db.activos.push({ id: db.sig++, codigo: c1, nombre: c2, uid: null, area: Number($("r-area").value) });
+    } else {
+      db.responsables.push({ id: db.sig++, nombre: c1, cargo: c2, uid: null });
+    }
+    guardar();
+    $("r-nuevo").reset();
+    pintarListaRegistro();
+    pintarFormNuevo();
+    mostrar("r-ok", `${c1} creado. Ahora léale el tag y asócielo.`);
+  }
+
+  // ---------------- eventos ----------------
+  document.querySelectorAll("[data-ir]").forEach((el) =>
+    el.addEventListener("click", () => ir(el.dataset.ir)));
+  $("btn-menu").addEventListener("click", () => $("sidebar").classList.toggle("abierta"));
+  document.querySelectorAll(".btn-nfc").forEach((b) =>
+    b.addEventListener("click", () => iniciarNfc($("v-registrar").hidden ? "t-error" : "r-error")));
+
+  $("t-manual").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const inp = ev.target.querySelector("input");
+    leerTraslado(normalizar(inp.value));
+    inp.value = "";
+  });
+  $("f-sede").addEventListener("change", llenarAreas);
+  $("t-form").addEventListener("submit", aceptarTraslado);
+  $("t-cancelar").addEventListener("click", reiniciarTraslado);
+  $("t-nuevo").addEventListener("click", reiniciarTraslado);
+
+  $("r-manual").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const inp = ev.target.querySelector("input");
+    leerRegistro(normalizar(inp.value));
+    inp.value = "";
+  });
+  document.querySelectorAll("[name=r-tipo]").forEach((x) =>
+    x.addEventListener("change", () => { pintarListaRegistro(); pintarFormNuevo(); $("r-reemplazar").hidden = true; }));
+  $("r-asociar").addEventListener("click", () => asociar(false));
+  $("r-reemplazar").addEventListener("click", () => asociar(true));
+  $("r-nuevo").addEventListener("submit", crearNuevo);
+  $("r-reset").addEventListener("click", () => {
+    if (!confirm("¿Borrar todos los datos de este celular y volver a los de prueba?")) return;
+    db = DATOS_INICIALES();
+    guardar();
+    reiniciarTraslado();
+    ir("traslado");
+  });
+
+  if (!("NDEFReader" in window)) $("aviso-nfc").hidden = false;
+  ir(location.hash.slice(1));
+})();
+
+</script>
+</body>
+</html>

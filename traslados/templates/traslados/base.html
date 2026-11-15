@@ -1,0 +1,88 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Inventario{% endblock %} · Nordvital</title>
+  <link rel="stylesheet" href="{% static 'traslados/app.css' %}">
+</head>
+<body>
+  <header class="topbar">
+    <button type="button" class="icono" id="btn-menu" aria-label="Menú">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M13 10l2 2-2 2"/></svg>
+    </button>
+    <span class="logo">N</span>
+    <div class="topbar-der">
+      <div class="chip-usuario">
+        <div class="chip-texto">
+          {% if dispositivo %}
+            <strong>{{ dispositivo.nombre }}</strong><small>Celular autorizado</small>
+          {% elif request.user.is_authenticated %}
+            <strong>{{ request.user.get_username }}</strong><small>{% if request.user.is_staff %}Administrador{% else %}Usuario{% endif %}</small>
+          {% else %}
+            <strong>Sin autorizar</strong><small>Inventario NFC</small>
+          {% endif %}
+        </div>
+        <span class="avatar" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar">
+      <a href="{% url 'escanear' %}" class="nav-item">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3 2 12h3v8h5v-5h4v5h5v-8h3z"/></svg>
+        Inicio
+      </a>
+      <p class="nav-seccion">Gestión de inventarios</p>
+      <a href="{% url 'escanear' %}" class="nav-item {% block nav_traslados %}{% endblock %}">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg>
+        Traslado de equipos
+      </a>
+      {% if request.user.is_staff %}
+      <a href="{% url 'registrar' %}" class="nav-item {% block nav_registrar %}{% endblock %}">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 10h8M8 14h5"/></svg>
+        Registrar tags
+      </a>
+      <a href="{% url 'admin:index' %}" class="nav-item">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m21 16-9 5-9-5V8l9-5 9 5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>
+        Inventarios (admin)
+      </a>
+      {% endif %}
+      {% if request.user.is_authenticated %}
+      <div class="nav-pie">{% include "traslados/_salir.html" %}</div>
+      {% endif %}
+    </nav>
+
+    <main class="contenido">
+      <section class="tarjeta encabezado">
+        <a href="{% url 'escanear' %}" class="icono volver" aria-label="Volver">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>
+        </a>
+        <div class="encabezado-texto">
+          <h1>{% block h1 %}{% endblock %}</h1>
+          <span class="subrayado"></span>
+          <p>{% block subtitulo %}{% endblock %}</p>
+        </div>
+        <div class="migas">
+          <a href="{% url 'escanear' %}">Inicio</a><span>›</span><span>{% block miga %}{% endblock %}</span>
+        </div>
+      </section>
+
+      {% if messages %}{% for m in messages %}<p class="error">{{ m }}</p>{% endfor %}{% endif %}
+
+      <section class="tarjeta cuerpo">
+        {% block contenido %}{% endblock %}
+      </section>
+    </main>
+  </div>
+
+  <script>
+    document.getElementById("btn-menu").addEventListener("click", () =>
+      document.getElementById("sidebar").classList.toggle("abierta"));
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,13 @@
+{% extends "traslados/base.html" %}
+{% block titulo %}Celular no autorizado{% endblock %}
+{% block h1 %}Celular no autorizado{% endblock %}
+{% block subtitulo %}Este celular todavía no puede registrar traslados{% endblock %}
+{% block miga %}Traslado de equipos{% endblock %}
+
+{% block contenido %}
+  <div class="vacio">
+    <p class="vacio-titulo">No tienes acceso a esta opción</p>
+    <p>Un administrador debe autorizar este celular una sola vez.</p>
+    <a class="boton" href="{% url 'admin:login' %}?next={% url 'registrar' %}">Soy administrador: autorizar</a>
+  </div>
+{% endblock %}
